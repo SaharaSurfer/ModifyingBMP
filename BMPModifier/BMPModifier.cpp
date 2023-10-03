@@ -56,17 +56,16 @@ struct BMP {
 
 		int width = fileheader.width;
 		int height = fileheader.height;
-		//int padded_width_m3 = (3 * width + 3) & (-4);
-		//std::cout << width << " - actual width, " << padded_width_m3 / 3 << " - corrected width\n";
+		int padding = 4 - width * 3 % 4; // In BMP images the line width is rounded to multiples of 4
 
 		// Reading info about pixels.
-		unsigned char* pixel_info = new unsigned char[3 * width * height];
-		size_t bytes_read = fread(pixel_info, sizeof(char), 3 * width * height, source_image);
-		if (bytes_read != 3 * width * height)
+		unsigned char* pixel_info = new unsigned char[(3 * width + padding) * height];
+		size_t bytes_read = fread(pixel_info, sizeof(char), (3 * width + padding) * height, source_image);
+		if (bytes_read != (3 * width + padding) * height)
 		{
 			delete[] pixel_info;
 			fclose(source_image);
-			std::cout << bytes_read << " - bytes read, " << 3 * width * height << " bytes should be\n";
+			std::cout << bytes_read << " - bytes read, " << (3 * width + padding) * height << " bytes should be\n";
 			std::cout << "Pixel information read wrongly\n";
 			return 0;
 		}
@@ -91,16 +90,18 @@ struct BMP {
 			return 0;
 		}
 
-		//int padded_width_m3 = (3 * fheader.width + 3) & (-4); // для некратных 4
+		int padding = 4 - fheader.width * 3 % 4;
 
-		size_t written_bytes = fwrite(data, sizeof(char), 3 * fheader.width * fheader.height, image_write);
-		if (written_bytes != 3 * fheader.width * fheader.height)
+		size_t written_bytes = fwrite(data, sizeof(char), (3 * fheader.width + padding) * fheader.height, image_write);
+		if (written_bytes != (3 * fheader.width + padding) * fheader.height)
 		{
-			std::cout << written_bytes << " / " << 3 * fheader.width * fheader.height << "bytes written\n";
+			std::cout << written_bytes << " / " << (3 * fheader.width + padding) * fheader.height << "bytes written\n";
 			fclose(image_write);
-
 		}
-		else { std::cout << "File written successfully\n"; }
+		else 
+		{
+			std::cout << "File written successfully\n";
+		}
 
 		fclose(image_write);
 		return 0;
@@ -109,14 +110,15 @@ struct BMP {
 	unsigned char* turn_left(BMPFileHeader fheader, unsigned char* data)
 	{
 		int w = fheader.width, h = fheader.height;
-		unsigned char* new_data = new unsigned char[3 * w * h];
+		int padding_curr = 4 - 3 * w % 4, padding_source = 4 - 3 * h % 4;
+		unsigned char* new_data = new unsigned char[(3 * w + padding_curr) * h];
 		for (int y = 0; y < h; y++)
 		{
 			for (int x = 0; x < w; x++)
 			{
-				new_data[(y * w + x) * 3] = data[((w - 1 - x) * h + y) * 3];
-				new_data[(y * w + x) * 3 + 1] = data[((w - 1 - x) * h + y) * 3 + 1];
-				new_data[(y * w + x) * 3 + 2] = data[((w - 1 - x) * h + y) * 3 + 2];
+				new_data[(y * w + x) * 3 + y * padding_curr] = data[((w - 1 - x) * h + y) * 3 + (w - 1 - x) * padding_source];
+				new_data[(y * w + x) * 3 + 1 + y * padding_curr] = data[((w - 1 - x) * h + y) * 3 + 1 + (w - 1 - x) * padding_source];
+				new_data[(y * w + x) * 3 + 2 + y * padding_curr] = data[((w - 1 - x) * h + y) * 3 + 2 + (w - 1 - x) * padding_source];
 			}
 		}
 
@@ -126,14 +128,15 @@ struct BMP {
 	unsigned char* turn_right(BMPFileHeader fheader, unsigned char* data)
 	{
 		int w = fheader.width, h = fheader.height;
-		unsigned char* new_data = new unsigned char[3 * w * h];
+		int padding_curr = 4 - 3 * w % 4, padding_source = 4 - 3 * h % 4;
+		unsigned char* new_data = new unsigned char[(3 * w + padding_curr) * h];
 		for (int y = 0; y < h; y++)
 		{
 			for (int x = 0; x < w; x++)
 			{
-				new_data[(y * w + x) * 3] = data[(x * h + h - 1 - y) * 3];
-				new_data[(y * w + x) * 3 + 1] = data[(x * h + h - 1 - y) * 3 + 1];
-				new_data[(y * w + x) * 3 + 2] = data[(x * h + h - 1 - y) * 3 + 2];
+				new_data[(y * w + x) * 3 + y * padding_curr] = data[(x * h + h - 1 - y) * 3 + x * padding_source];
+				new_data[(y * w + x) * 3 + 1 + y * padding_curr] = data[(x * h + h - 1 - y) * 3 + 1 + x * padding_source];
+				new_data[(y * w + x) * 3 + 2 + y * padding_curr] = data[(x * h + h - 1 - y) * 3 + 2 + x * padding_source];
 			}
 		}
 
@@ -167,7 +170,8 @@ struct BMP {
 		}
 
 		// Applying the filter
-		unsigned char* new_data = new unsigned char[3 * fheader.width * fheader.height];
+		int padding = 4 - 3 * fheader.width % 4;
+		unsigned char* new_data = new unsigned char[(3 * fheader.width + padding) * fheader.height];
 		for (size_t y = 0; y < fheader.height; y++)
 		{
 			for (size_t x = 0; x < fheader.width; x++)
@@ -179,21 +183,21 @@ struct BMP {
 					{
 						if (y + shift_h - radius > 0 and y + shift_h - radius < fheader.height and x + shift_w - radius > 0 and x + shift_w - radius < fheader.width)
 						{
-							r += Gaus_Kernel[shift_h][shift_w] * data[((y + shift_h - radius) * fheader.width + x + shift_w - radius) * 3];
-							g += Gaus_Kernel[shift_h][shift_w] * data[((y + shift_h - radius) * fheader.width + x + shift_w - radius) * 3 + 1];
-							b += Gaus_Kernel[shift_h][shift_w] * data[((y + shift_h - radius) * fheader.width + x + shift_w - radius) * 3 + 2];
+							r += Gaus_Kernel[shift_h][shift_w] * data[((y + shift_h - radius) * fheader.width + x + shift_w - radius) * 3 + padding * (y + shift_h - radius)];
+							g += Gaus_Kernel[shift_h][shift_w] * data[((y + shift_h - radius) * fheader.width + x + shift_w - radius) * 3 + 1 + padding * (y + shift_h - radius)];
+							b += Gaus_Kernel[shift_h][shift_w] * data[((y + shift_h - radius) * fheader.width + x + shift_w - radius) * 3 + 2 + padding * (y + shift_h - radius)];
 						}
 						else
 						{
-							r += Gaus_Kernel[shift_h][shift_w] * data[(y * fheader.width + x) * 3];
-							g += Gaus_Kernel[shift_h][shift_w] * data[(y * fheader.width + x) * 3 + 1];
-							b += Gaus_Kernel[shift_h][shift_w] * data[(y * fheader.width + x) * 3 + 2];
+							r += Gaus_Kernel[shift_h][shift_w] * data[(y * fheader.width + x) * 3 + y * padding];
+							g += Gaus_Kernel[shift_h][shift_w] * data[(y * fheader.width + x) * 3 + 1 + y * padding];
+							b += Gaus_Kernel[shift_h][shift_w] * data[(y * fheader.width + x) * 3 + 2 + y * padding];
 						}
 					}
 				}
-				new_data[(y * fheader.width + x) * 3] = (int)r;
-				new_data[(y * fheader.width + x) * 3 + 1] = (int)g;
-				new_data[(y * fheader.width + x) * 3 + 2] = (int)b;
+				new_data[(y * fheader.width + x) * 3 + y * padding] = (int)r;
+				new_data[(y * fheader.width + x) * 3 + 1 + y * padding] = (int)g;
+				new_data[(y * fheader.width + x) * 3 + 2 + y * padding] = (int)b;
 			}
 		}
 
@@ -204,7 +208,7 @@ struct BMP {
 
 int main() {
 	BMP image;
-	unsigned char* pixel_info = image.read_file("scenery.bmp");
+	unsigned char* pixel_info = image.read_file("eye.bmp");
 	std::cout << image.fileheader.file_size << " bytes = file size\n";
 
 	//Rotating image to the left
