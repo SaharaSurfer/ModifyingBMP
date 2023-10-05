@@ -56,7 +56,7 @@ struct BMP {
 
 		int width = fileheader.width;
 		int height = fileheader.height;
-		int padding = 4 - width * 3 % 4; // In BMP images the line width is rounded to multiples of 4
+		int padding = (4 - width * 3 % 4) % 4; // In BMP images the line width is rounded to multiples of 4
 
 		// Reading info about pixels.
 		unsigned char* pixel_info = new unsigned char[(3 * width + padding) * height];
@@ -90,7 +90,7 @@ struct BMP {
 			return 0;
 		}
 
-		int padding = 4 - fheader.width * 3 % 4;
+		int padding = (4 - fheader.width * 3 % 4) % 4;
 
 		size_t written_bytes = fwrite(data, sizeof(char), (3 * fheader.width + padding) * fheader.height, image_write);
 		if (written_bytes != (3 * fheader.width + padding) * fheader.height)
@@ -110,7 +110,7 @@ struct BMP {
 	unsigned char* turn_left(BMPFileHeader fheader, unsigned char* data)
 	{
 		int w = fheader.width, h = fheader.height;
-		int padding_curr = 4 - 3 * w % 4, padding_source = 4 - 3 * h % 4;
+		int padding_curr = (4 - 3 * w % 4) % 4, padding_source = (4 - 3 * h % 4) % 4;
 		unsigned char* new_data = new unsigned char[(3 * w + padding_curr) * h];
 		for (int y = 0; y < h; y++)
 		{
@@ -128,7 +128,7 @@ struct BMP {
 	unsigned char* turn_right(BMPFileHeader fheader, unsigned char* data)
 	{
 		int w = fheader.width, h = fheader.height;
-		int padding_curr = 4 - 3 * w % 4, padding_source = 4 - 3 * h % 4;
+		int padding_curr = (4 - 3 * w % 4) % 4, padding_source = (4 - 3 * h % 4) % 4;
 		unsigned char* new_data = new unsigned char[(3 * w + padding_curr) * h];
 		for (int y = 0; y < h; y++)
 		{
@@ -170,7 +170,7 @@ struct BMP {
 		}
 
 		// Applying the filter
-		int padding = 4 - 3 * fheader.width % 4;
+		int padding = (4 - 3 * fheader.width % 4) % 4;
 		unsigned char* new_data = new unsigned char[(3 * fheader.width + padding) * fheader.height];
 		for (size_t y = 0; y < fheader.height; y++)
 		{
