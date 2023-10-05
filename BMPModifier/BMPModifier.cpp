@@ -208,7 +208,7 @@ struct BMP {
 
 int main() {
 	BMP image;
-	unsigned char* pixel_info = image.read_file("eye.bmp");
+	unsigned char* pixel_info = image.read_file("test1.bmp");
 	std::cout << image.fileheader.file_size << " bytes = file size\n";
 
 	//Rotating image to the left
