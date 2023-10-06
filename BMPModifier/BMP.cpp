@@ -155,28 +155,30 @@ BMP* BMP::gaussian_blur()
 	{
 		for (size_t x = 0; x < fileheader.width; x++)
 		{
-			double r = 0, g = 0, b = 0;
+			int pixel_pos = (y * fileheader.width + x) * 3 + y * padding;
+			double mean_colour[3] = { 0, 0, 0 };
 			for (int shift_h = 0; shift_h < matrix_size; shift_h++)
 			{
 				for (int shift_w = 0; shift_w < matrix_size; shift_w++)
 				{
 					if (y + shift_h - radius > 0 and y + shift_h - radius < fileheader.height and x + shift_w - radius > 0 and x + shift_w - radius < fileheader.width)
-					{
-						r += Gaus_Kernel[shift_h][shift_w] * pixel_info[((y + shift_h - radius) * fileheader.width + x + shift_w - radius) * 3 + padding * (y + shift_h - radius)];
-						g += Gaus_Kernel[shift_h][shift_w] * pixel_info[((y + shift_h - radius) * fileheader.width + x + shift_w - radius) * 3 + 1 + padding * (y + shift_h - radius)];
-						b += Gaus_Kernel[shift_h][shift_w] * pixel_info[((y + shift_h - radius) * fileheader.width + x + shift_w - radius) * 3 + 2 + padding * (y + shift_h - radius)];
+					{	
+						int matrix_shift = ((shift_h - radius) * fileheader.width + shift_w - radius) * 3 + padding * (shift_h - radius);
+						mean_colour[0] += Gaus_Kernel[shift_h][shift_w] * pixel_info[pixel_pos + matrix_shift + 0];
+						mean_colour[1] += Gaus_Kernel[shift_h][shift_w] * pixel_info[pixel_pos + matrix_shift + 1];
+						mean_colour[2] += Gaus_Kernel[shift_h][shift_w] * pixel_info[pixel_pos + matrix_shift + 2];
 					}
 					else
 					{
-						r += Gaus_Kernel[shift_h][shift_w] * pixel_info[(y * fileheader.width + x) * 3 + y * padding];
-						g += Gaus_Kernel[shift_h][shift_w] * pixel_info[(y * fileheader.width + x) * 3 + 1 + y * padding];
-						b += Gaus_Kernel[shift_h][shift_w] * pixel_info[(y * fileheader.width + x) * 3 + 2 + y * padding];
+						mean_colour[0] += Gaus_Kernel[shift_h][shift_w] * pixel_info[pixel_pos + 0];
+						mean_colour[1] += Gaus_Kernel[shift_h][shift_w] * pixel_info[pixel_pos + 1];
+						mean_colour[2] += Gaus_Kernel[shift_h][shift_w] * pixel_info[pixel_pos + 2];
 					}
 				}
 			}
-			new_data[(y * fileheader.width + x) * 3 + y * padding] = (int)r;
-			new_data[(y * fileheader.width + x) * 3 + 1 + y * padding] = (int)g;
-			new_data[(y * fileheader.width + x) * 3 + 2 + y * padding] = (int)b;
+			new_data[pixel_pos + 0] = (int)mean_colour[0];
+			new_data[pixel_pos + 1] = (int)mean_colour[1];
+			new_data[pixel_pos + 2] = (int)mean_colour[2];
 		}
 	}
 
