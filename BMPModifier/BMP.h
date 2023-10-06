@@ -31,15 +31,23 @@ struct BMPFileHeader {
 
 struct BMP {
 	BMPFileHeader fileheader;
+	unsigned char* pixel_info;
+
+	BMP(BMPFileHeader fheader, unsigned char* pixel_data)
+	{
+		fileheader = fheader;
+		pixel_info = pixel_data;
+	}
+	BMP() {}
 
 	unsigned char* read_file(const char* filename);
 
-	unsigned char* write_file(const char* filename, BMPFileHeader fheader, unsigned char* data);
+	unsigned char* write_file(const char* filename);
 
-	unsigned char* turn_left(BMPFileHeader fheader, unsigned char* data);
+	BMP turn_left();
 
-	unsigned char* turn_right(BMPFileHeader fheader, unsigned char* data);
+	BMP turn_right();
 
-	unsigned char* gaussian_blur(BMPFileHeader fheader, unsigned char* data);
+	BMP gaussian_blur();
 
 };

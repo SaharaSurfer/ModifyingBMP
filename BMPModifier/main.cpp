@@ -3,29 +3,25 @@
 
 int main() {
 	BMP image;
-	unsigned char* pixel_info = image.read_file("test1.bmp");
+	image.read_file("test3.bmp");
 	std::cout << image.fileheader.file_size << " bytes = file size\n";
-
+	
 	//Rotating image to the left
-	BMPFileHeader leftR_header = image.fileheader;
-	std::swap(leftR_header.width, leftR_header.height);
-	unsigned char* leftR_data = image.turn_left(leftR_header, pixel_info);
-	image.write_file("Turned_left.bmp", leftR_header, leftR_data);
-	delete[] leftR_data;
+	BMP turned_left = image.turn_left();
+	turned_left.write_file("Turned_left.bmp");
+	//delete& turned_left;
 
 	//Rotating image to the right
-	BMPFileHeader rightR_header = image.fileheader;
-	std::swap(rightR_header.width, rightR_header.height);
-	unsigned char* rightR_data = image.turn_right(rightR_header, pixel_info);
-	image.write_file("Turned_right.bmp", rightR_header, rightR_data);
-	delete[] rightR_data;
+	BMP turned_right = image.turn_right();
+	turned_right.write_file("Turned_right.bmp");
+	//delete& turned_right;
 
 	//Putting on gauss filter
-	BMPFileHeader gaus_header = image.fileheader;
-	unsigned char* gaus_data = image.gaussian_blur(gaus_header, pixel_info);
-	image.write_file("Gaussian_filter.bmp", image.fileheader, gaus_data);
-	delete[] gaus_data;
+	BMP gaussian_filter = image.gaussian_blur();
+	gaussian_filter.write_file("Gaussian_filter.bmp");
+	//delete& gaussian_filter;
 
-	delete[] pixel_info;
+	//delete& image;
+
 	return 0;
 }

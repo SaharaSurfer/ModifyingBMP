@@ -29,22 +29,26 @@ unsigned char* BMP::read_file(const char* filename)
 	int padding = (4 - width * 3 % 4) % 4; // In BMP images the line width is rounded to multiples of 4
 
 	// Reading info about pixels.
-	unsigned char* pixel_info = new unsigned char[(3 * width + padding) * height];
-	size_t bytes_read = fread(pixel_info, sizeof(char), (3 * width + padding) * height, source_image);
+	unsigned char* data = new unsigned char[(3 * width + padding) * height];
+	size_t bytes_read = fread(data, sizeof(char), (3 * width + padding) * height, source_image);
 	if (bytes_read != (3 * width + padding) * height)
 	{
-		delete[] pixel_info;
+		delete[] data;
 		fclose(source_image);
 		std::cout << bytes_read << " - bytes read, " << (3 * width + padding) * height << " bytes should be\n";
 		std::cout << "Pixel information read wrongly\n";
 		return 0;
 	}
 	fclose(source_image);
-	return pixel_info;
+	BMP::pixel_info = data;
 }
 
-unsigned char* BMP::write_file(const char* filename, BMPFileHeader fheader, unsigned char* data)
+unsigned char* BMP::write_file(const char* filename)
+
 {
+	BMPFileHeader fheader = BMP::fileheader;
+	unsigned char* data = BMP::pixel_info;
+
 	FILE* image_write = fopen(filename, "wb");
 	if (!image_write)
 	{
@@ -77,8 +81,12 @@ unsigned char* BMP::write_file(const char* filename, BMPFileHeader fheader, unsi
 	return 0;
 }
 
-unsigned char* BMP::turn_left(BMPFileHeader fheader, unsigned char* data)
+BMP BMP::turn_left()
 {
+	BMPFileHeader fheader = BMP::fileheader;
+	unsigned char* data = BMP::pixel_info;
+
+	std::swap(fheader.width, fheader.height);
 	int w = fheader.width, h = fheader.height;
 	int padding_curr = (4 - 3 * w % 4) % 4, padding_source = (4 - 3 * h % 4) % 4;
 	unsigned char* new_data = new unsigned char[(3 * w + padding_curr) * h];
@@ -92,11 +100,15 @@ unsigned char* BMP::turn_left(BMPFileHeader fheader, unsigned char* data)
 		}
 	}
 
-	return new_data;
+	return BMP(fheader, new_data);
 }
 
-unsigned char* BMP::turn_right(BMPFileHeader fheader, unsigned char* data)
+BMP BMP::turn_right()
 {
+	BMPFileHeader fheader = BMP::fileheader;
+	unsigned char* data = BMP::pixel_info;
+
+	std::swap(fheader.width, fheader.height);
 	int w = fheader.width, h = fheader.height;
 	int padding_curr = (4 - 3 * w % 4) % 4, padding_source = (4 - 3 * h % 4) % 4;
 	unsigned char* new_data = new unsigned char[(3 * w + padding_curr) * h];
@@ -110,11 +122,14 @@ unsigned char* BMP::turn_right(BMPFileHeader fheader, unsigned char* data)
 		}
 	}
 
-	return new_data;
+	return BMP(fheader, new_data);
 }
 
-unsigned char* BMP::gaussian_blur(BMPFileHeader fheader, unsigned char* data)
+BMP BMP::gaussian_blur()
 {
+	BMPFileHeader fheader = BMP::fileheader;
+	unsigned char* data = BMP::pixel_info;
+
 	const int radius = 10, matrix_size = 2 * radius + 1;
 	const double pi = 3.14159, sigma = radius / 3;
 	double sum = 0.0;
@@ -171,5 +186,5 @@ unsigned char* BMP::gaussian_blur(BMPFileHeader fheader, unsigned char* data)
 		}
 	}
 
-	return new_data;
+	return BMP(fheader, new_data);
 }
