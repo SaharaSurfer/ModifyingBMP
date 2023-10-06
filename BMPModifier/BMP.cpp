@@ -22,7 +22,7 @@ unsigned char* BMP::read_file(const char* filename)
 		std::cout << "BMPFileHeader was read wrong (size issue)!\n";
 		return 0;
 	}
-	std::cout << fheader_size << " = size of header\n";
+	std::cout << fheader_size << " bytes = size of header\n";
 
 	int width = fileheader.width;
 	int height = fileheader.height;
@@ -41,14 +41,12 @@ unsigned char* BMP::read_file(const char* filename)
 	}
 	fclose(source_image);
 	BMP::pixel_info = data;
+
+	return 0;
 }
 
 unsigned char* BMP::write_file(const char* filename)
-
 {
-	BMPFileHeader fheader = BMP::fileheader;
-	unsigned char* data = BMP::pixel_info;
-
 	FILE* image_write = fopen(filename, "wb");
 	if (!image_write)
 	{
@@ -56,7 +54,7 @@ unsigned char* BMP::write_file(const char* filename)
 		return 0;
 	}
 
-	size_t fheader_size = fwrite(&fheader, sizeof(char), sizeof(BMPFileHeader), image_write);
+	size_t fheader_size = fwrite(&fileheader, sizeof(char), sizeof(BMPFileHeader), image_write);
 	if (fheader_size != sizeof(BMPFileHeader))
 	{
 		fclose(image_write);
@@ -64,12 +62,12 @@ unsigned char* BMP::write_file(const char* filename)
 		return 0;
 	}
 
-	int padding = (4 - fheader.width * 3 % 4) % 4;
+	int padding = (4 - fileheader.width * 3 % 4) % 4;
 
-	size_t written_bytes = fwrite(data, sizeof(char), (3 * fheader.width + padding) * fheader.height, image_write);
-	if (written_bytes != (3 * fheader.width + padding) * fheader.height)
+	size_t written_bytes = fwrite(pixel_info, sizeof(char), (3 * fileheader.width + padding) * fileheader.height, image_write);
+	if (written_bytes != (3 * fileheader.width + padding) * fileheader.height)
 	{
-		std::cout << written_bytes << " / " << (3 * fheader.width + padding) * fheader.height << "bytes written\n";
+		std::cout << written_bytes << " / " << (3 * fileheader.width + padding) * fileheader.height << "bytes written\n";
 		fclose(image_write);
 	}
 	else
@@ -81,10 +79,9 @@ unsigned char* BMP::write_file(const char* filename)
 	return 0;
 }
 
-BMP BMP::turn_left()
+BMP* BMP::turn_left()
 {
-	BMPFileHeader fheader = BMP::fileheader;
-	unsigned char* data = BMP::pixel_info;
+	BMPFileHeader fheader = fileheader;
 
 	std::swap(fheader.width, fheader.height);
 	int w = fheader.width, h = fheader.height;
@@ -94,19 +91,18 @@ BMP BMP::turn_left()
 	{
 		for (int x = 0; x < w; x++)
 		{
-			new_data[(y * w + x) * 3 + y * padding_curr] = data[((w - 1 - x) * h + y) * 3 + (w - 1 - x) * padding_source];
-			new_data[(y * w + x) * 3 + 1 + y * padding_curr] = data[((w - 1 - x) * h + y) * 3 + 1 + (w - 1 - x) * padding_source];
-			new_data[(y * w + x) * 3 + 2 + y * padding_curr] = data[((w - 1 - x) * h + y) * 3 + 2 + (w - 1 - x) * padding_source];
+			new_data[(y * w + x) * 3 + y * padding_curr] = pixel_info[((w - 1 - x) * h + y) * 3 + (w - 1 - x) * padding_source];
+			new_data[(y * w + x) * 3 + 1 + y * padding_curr] = pixel_info[((w - 1 - x) * h + y) * 3 + 1 + (w - 1 - x) * padding_source];
+			new_data[(y * w + x) * 3 + 2 + y * padding_curr] = pixel_info[((w - 1 - x) * h + y) * 3 + 2 + (w - 1 - x) * padding_source];
 		}
 	}
-
-	return BMP(fheader, new_data);
+	BMP* new_image = new BMP(fheader, new_data);
+	return new_image;
 }
 
-BMP BMP::turn_right()
+BMP* BMP::turn_right()
 {
-	BMPFileHeader fheader = BMP::fileheader;
-	unsigned char* data = BMP::pixel_info;
+	BMPFileHeader fheader = fileheader;
 
 	std::swap(fheader.width, fheader.height);
 	int w = fheader.width, h = fheader.height;
@@ -116,20 +112,18 @@ BMP BMP::turn_right()
 	{
 		for (int x = 0; x < w; x++)
 		{
-			new_data[(y * w + x) * 3 + y * padding_curr] = data[(x * h + h - 1 - y) * 3 + x * padding_source];
-			new_data[(y * w + x) * 3 + 1 + y * padding_curr] = data[(x * h + h - 1 - y) * 3 + 1 + x * padding_source];
-			new_data[(y * w + x) * 3 + 2 + y * padding_curr] = data[(x * h + h - 1 - y) * 3 + 2 + x * padding_source];
+			new_data[(y * w + x) * 3 + y * padding_curr] = pixel_info[(x * h + h - 1 - y) * 3 + x * padding_source];
+			new_data[(y * w + x) * 3 + 1 + y * padding_curr] = pixel_info[(x * h + h - 1 - y) * 3 + 1 + x * padding_source];
+			new_data[(y * w + x) * 3 + 2 + y * padding_curr] = pixel_info[(x * h + h - 1 - y) * 3 + 2 + x * padding_source];
 		}
 	}
 
-	return BMP(fheader, new_data);
+	BMP* new_image = new BMP(fheader, new_data);
+	return new_image;
 }
 
-BMP BMP::gaussian_blur()
+BMP* BMP::gaussian_blur()
 {
-	BMPFileHeader fheader = BMP::fileheader;
-	unsigned char* data = BMP::pixel_info;
-
 	const int radius = 10, matrix_size = 2 * radius + 1;
 	const double pi = 3.14159, sigma = radius / 3;
 	double sum = 0.0;
@@ -155,36 +149,37 @@ BMP BMP::gaussian_blur()
 	}
 
 	// Applying the filter
-	int padding = (4 - 3 * fheader.width % 4) % 4;
-	unsigned char* new_data = new unsigned char[(3 * fheader.width + padding) * fheader.height];
-	for (size_t y = 0; y < fheader.height; y++)
+	int padding = (4 - 3 * fileheader.width % 4) % 4;
+	unsigned char* new_data = new unsigned char[(3 * fileheader.width + padding) * fileheader.height];
+	for (size_t y = 0; y < fileheader.height; y++)
 	{
-		for (size_t x = 0; x < fheader.width; x++)
+		for (size_t x = 0; x < fileheader.width; x++)
 		{
 			double r = 0, g = 0, b = 0;
 			for (int shift_h = 0; shift_h < matrix_size; shift_h++)
 			{
 				for (int shift_w = 0; shift_w < matrix_size; shift_w++)
 				{
-					if (y + shift_h - radius > 0 and y + shift_h - radius < fheader.height and x + shift_w - radius > 0 and x + shift_w - radius < fheader.width)
+					if (y + shift_h - radius > 0 and y + shift_h - radius < fileheader.height and x + shift_w - radius > 0 and x + shift_w - radius < fileheader.width)
 					{
-						r += Gaus_Kernel[shift_h][shift_w] * data[((y + shift_h - radius) * fheader.width + x + shift_w - radius) * 3 + padding * (y + shift_h - radius)];
-						g += Gaus_Kernel[shift_h][shift_w] * data[((y + shift_h - radius) * fheader.width + x + shift_w - radius) * 3 + 1 + padding * (y + shift_h - radius)];
-						b += Gaus_Kernel[shift_h][shift_w] * data[((y + shift_h - radius) * fheader.width + x + shift_w - radius) * 3 + 2 + padding * (y + shift_h - radius)];
+						r += Gaus_Kernel[shift_h][shift_w] * pixel_info[((y + shift_h - radius) * fileheader.width + x + shift_w - radius) * 3 + padding * (y + shift_h - radius)];
+						g += Gaus_Kernel[shift_h][shift_w] * pixel_info[((y + shift_h - radius) * fileheader.width + x + shift_w - radius) * 3 + 1 + padding * (y + shift_h - radius)];
+						b += Gaus_Kernel[shift_h][shift_w] * pixel_info[((y + shift_h - radius) * fileheader.width + x + shift_w - radius) * 3 + 2 + padding * (y + shift_h - radius)];
 					}
 					else
 					{
-						r += Gaus_Kernel[shift_h][shift_w] * data[(y * fheader.width + x) * 3 + y * padding];
-						g += Gaus_Kernel[shift_h][shift_w] * data[(y * fheader.width + x) * 3 + 1 + y * padding];
-						b += Gaus_Kernel[shift_h][shift_w] * data[(y * fheader.width + x) * 3 + 2 + y * padding];
+						r += Gaus_Kernel[shift_h][shift_w] * pixel_info[(y * fileheader.width + x) * 3 + y * padding];
+						g += Gaus_Kernel[shift_h][shift_w] * pixel_info[(y * fileheader.width + x) * 3 + 1 + y * padding];
+						b += Gaus_Kernel[shift_h][shift_w] * pixel_info[(y * fileheader.width + x) * 3 + 2 + y * padding];
 					}
 				}
 			}
-			new_data[(y * fheader.width + x) * 3 + y * padding] = (int)r;
-			new_data[(y * fheader.width + x) * 3 + 1 + y * padding] = (int)g;
-			new_data[(y * fheader.width + x) * 3 + 2 + y * padding] = (int)b;
+			new_data[(y * fileheader.width + x) * 3 + y * padding] = (int)r;
+			new_data[(y * fileheader.width + x) * 3 + 1 + y * padding] = (int)g;
+			new_data[(y * fileheader.width + x) * 3 + 2 + y * padding] = (int)b;
 		}
 	}
 
-	return BMP(fheader, new_data);
+	BMP* new_image = new BMP(fileheader, new_data);
+	return new_image;
 }

@@ -1,7 +1,8 @@
 #pragma once
 
 #pragma pack(push, 1)
-struct BMPFileHeader {
+struct BMPFileHeader 
+{
 	uint16_t file_type{ 0x4D42 };
 	uint32_t file_size{ 0 };
 	uint16_t reserved1{ 0 };
@@ -29,7 +30,8 @@ struct BMPFileHeader {
 };
 #pragma pack(pop)
 
-struct BMP {
+struct BMP 
+{
 	BMPFileHeader fileheader;
 	unsigned char* pixel_info;
 
@@ -44,10 +46,14 @@ struct BMP {
 
 	unsigned char* write_file(const char* filename);
 
-	BMP turn_left();
+	BMP* turn_left();
 
-	BMP turn_right();
+	BMP* turn_right();
+	
+	BMP* gaussian_blur();
 
-	BMP gaussian_blur();
-
+	~BMP() 
+	{
+		delete[] pixel_info;
+	}
 };
