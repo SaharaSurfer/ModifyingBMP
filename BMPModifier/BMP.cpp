@@ -5,7 +5,7 @@
 #include <cmath>
 #include "BMP.h"
 
-unsigned char* BMP::read_file(const char* filename)
+int BMP::read_file(const char* filename)
 {
 	FILE* source_image = fopen(filename, "rb");
 	if (!source_image)
@@ -44,7 +44,7 @@ unsigned char* BMP::read_file(const char* filename)
 	return 0;
 }
 
-unsigned char* BMP::write_file(const char* filename)
+int BMP::write_file(const char* filename)
 {
 	FILE* image_write = fopen(filename, "wb");
 	if (!image_write)
@@ -78,7 +78,7 @@ unsigned char* BMP::write_file(const char* filename)
 	return 0;
 }
 
-BMP* BMP::turn_left()
+BMP BMP::turn_left()
 {
 	BMPFileHeader fheader = fileheader;
 
@@ -95,11 +95,11 @@ BMP* BMP::turn_left()
 			std::copy_n(pixel_info + departure_pos, 3, new_data + arrival_pos);
 		}
 	}
-	BMP* new_image = new BMP(fheader, new_data);
-	return new_image;
+	
+	return BMP(fheader, new_data);
 }
 
-BMP* BMP::turn_right()
+BMP BMP::turn_right()
 {
 	BMPFileHeader fheader = fileheader;
 
@@ -117,11 +117,10 @@ BMP* BMP::turn_right()
 		}
 	}
 
-	BMP* new_image = new BMP(fheader, new_data);
-	return new_image;
+	return BMP(fheader, new_data);
 }
 
-BMP* BMP::gaussian_blur()
+BMP BMP::gaussian_blur()
 {
 	const int radius = 10, matrix_size = 2 * radius + 1;
 	const double pi = 3.14159, sigma = radius / 3;
@@ -175,6 +174,5 @@ BMP* BMP::gaussian_blur()
 		}
 	}
 
-	BMP* new_image = new BMP(fileheader, new_data);
-	return new_image;
+	return BMP(fileheader, new_data);
 }

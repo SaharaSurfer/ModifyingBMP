@@ -42,15 +42,15 @@ struct BMP
 	}
 	BMP() {}
 
-	unsigned char* read_file(const char* filename);
+	int read_file(const char* filename);
 
-	unsigned char* write_file(const char* filename);
+	int write_file(const char* filename);
 
-	BMP* turn_left();
+	BMP turn_left();
 
-	BMP* turn_right();
+	BMP turn_right();
 	
-	BMP* gaussian_blur();
+	BMP gaussian_blur();
 
 	~BMP() 
 	{
