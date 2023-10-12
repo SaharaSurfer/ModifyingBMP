@@ -15,7 +15,7 @@ int main() {
 	turned_right.write_file("Turned_right.bmp");
 
 	//Putting on gauss filter
-	BMP gaussian_filter = image.gaussian_blur();
+	BMP gaussian_filter = image.gaussian_blur(10);
 	gaussian_filter.write_file("Gaussian_filter.bmp");
 
 	return 0;

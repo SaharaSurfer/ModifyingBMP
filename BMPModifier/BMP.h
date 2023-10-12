@@ -1,4 +1,5 @@
 #pragma once
+#include <vector>
 
 #pragma pack(push, 1)
 struct BMPFileHeader 
@@ -39,7 +40,11 @@ struct BMP
 
 	BMP turn_right();
 	
-	BMP gaussian_blur();
+	BMP gaussian_blur(int radius);
+
+	std::vector<double> get_matrix(int radius);
+
+	double* get_gaus_colours(std::vector<double> Gaus_Kernel, int x, int y, int pixel_pos, int padding);
 
 	~BMP() 
 	{

@@ -117,59 +117,73 @@ BMP BMP::turn_right()
 	return BMP(fheader, new_data);
 }
 
-BMP BMP::gaussian_blur()
+BMP BMP::gaussian_blur(int radius)
 {
-	const int radius = 10, matrix_size = 2 * radius + 1;
-	const double pi = 3.14159, sigma = radius / 3;
-	double sum = 0.0;
-
-	// Filling the filter
-	double Gaus_Kernel[matrix_size][matrix_size];
-	for (int y = -radius; y <= radius; y++)
-	{
-		for (int x = -radius; x <= radius; x++)
-		{
-			Gaus_Kernel[y + radius][x + radius] = exp(-(x * x + y * y) / (2 * sigma * sigma)) / (2 * pi * sigma * sigma);
-			sum += Gaus_Kernel[y + radius][x + radius];
-		}
-	}
-	
-	// Normalizing matrix
-	for (int y = 0; y < matrix_size; y++)
-	{
-		for (int x = 0; x < matrix_size; x++)
-		{
-			Gaus_Kernel[y][x] /= sum;
-		}
-	}
-
-	// Applying the filter
 	int padding = (4 - 3 * fileheader.width % 4) % 4;
+	std::vector<double> Gaus_Kernel = get_matrix(radius);
+
 	unsigned char* new_data = new unsigned char[(3 * fileheader.width + padding) * fileheader.height];
 	for (int y = 0; y < fileheader.height; y++)
 	{
 		for (int x = 0; x < fileheader.width; x++)
 		{
 			int pixel_pos = (y * fileheader.width + x) * 3 + y * padding;
-			double mean_colour[3] = { 0, 0, 0 };
-			for (int shift_h = 0; shift_h < matrix_size; shift_h++)
-			{
-				for (int shift_w = 0; shift_w < matrix_size; shift_w++)
-				{
-					int matrix_shift = 0;
-					bool element_out_of_range = (y + shift_h - radius < 0 or y + shift_h - radius >= fileheader.height or x + shift_w - radius < 0 or x + shift_w - radius >= fileheader.width);
-					if (!element_out_of_range)
-					{
-						matrix_shift = ((shift_h - radius) * fileheader.width + shift_w - radius) * 3 + padding * (shift_h - radius);
-					}
-					mean_colour[0] += Gaus_Kernel[shift_h][shift_w] * pixel_info[pixel_pos + matrix_shift + 0];
-					mean_colour[1] += Gaus_Kernel[shift_h][shift_w] * pixel_info[pixel_pos + matrix_shift + 1];
-					mean_colour[2] += Gaus_Kernel[shift_h][shift_w] * pixel_info[pixel_pos + matrix_shift + 2];
-				}
-			}
+			double* mean_colour = get_gaus_colours(Gaus_Kernel, x, y, pixel_pos, padding);
 			std::copy_n(mean_colour, 3, new_data + pixel_pos);
 		}
 	}
 
 	return BMP(fileheader, new_data);
+}
+
+std::vector<double> BMP::get_matrix(int radius)
+{
+	const int matrix_size = 2 * radius + 1;
+	const double pi = 3.14159, sigma = radius / 3;
+	double sum = 0.0;
+
+	// Creating matrix
+	std::vector<double> Gaus_Kernel(matrix_size * matrix_size, 0.0);
+	for (int y = -radius; y <= radius; y++)
+	{
+		for (int x = -radius; x <= radius; x++)
+		{
+			Gaus_Kernel[(y + radius) * matrix_size + x + radius] = exp(-(x * x + y * y) / (2 * sigma * sigma)) / (2 * pi * sigma * sigma);
+			sum += Gaus_Kernel[(y + radius) * matrix_size + x + radius];
+		}
+	}
+
+	// Normalizing matrix
+	for (int y = 0; y < matrix_size; y++)
+	{
+		for (int x = 0; x < matrix_size; x++)
+		{
+			Gaus_Kernel[y * matrix_size + x] /= sum;
+		}
+	}
+
+	return Gaus_Kernel;
+}
+
+double* BMP::get_gaus_colours(std::vector<double> Gaus_Kernel, int x, int y, int pixel_pos, int padding)
+{
+	int matrix_size = (int)sqrt(Gaus_Kernel.size()), radius = (matrix_size - 1) / 2;
+	double mean_colour[3] = { 0, 0, 0 };
+	for (int shift_h = 0; shift_h < matrix_size; shift_h++)
+	{
+		for (int shift_w = 0; shift_w < matrix_size; shift_w++)
+		{
+			int matrix_shift = 0;
+			bool element_out_of_range = (y + shift_h - radius < 0 or y + shift_h - radius >= fileheader.height or x + shift_w - radius < 0 or x + shift_w - radius >= fileheader.width);
+			if (!element_out_of_range)
+			{
+				matrix_shift = ((shift_h - radius) * fileheader.width + shift_w - radius) * 3 + padding * (shift_h - radius);
+			}
+			mean_colour[0] += Gaus_Kernel[shift_h * matrix_size + shift_w] * pixel_info[pixel_pos + matrix_shift + 0];
+			mean_colour[1] += Gaus_Kernel[shift_h * matrix_size + shift_w] * pixel_info[pixel_pos + matrix_shift + 1];
+			mean_colour[2] += Gaus_Kernel[shift_h * matrix_size + shift_w] * pixel_info[pixel_pos + matrix_shift + 2];
+		}
+	}
+
+	return mean_colour;
 }
