@@ -22,7 +22,6 @@ int BMP::read_file(const char* filename)
 		std::cerr << "BMPFileHeader was read wrong (size issue)!\n";
 		return 0;
 	}
-	std::cout << fheader_size << " bytes = size of header\n";
 
 	int width = fileheader.width;
 	int height = fileheader.height;
