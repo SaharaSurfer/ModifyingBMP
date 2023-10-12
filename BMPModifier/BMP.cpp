@@ -95,7 +95,6 @@ BMP BMP::turn_left()
 			std::copy_n(pixel_info + departure_pos, 3, new_data + arrival_pos);
 		}
 	}
-	
 	return BMP(fheader, new_data);
 }
 
@@ -116,7 +115,6 @@ BMP BMP::turn_right()
 			std::copy_n(pixel_info + departure_pos, 3, new_data + arrival_pos);
 		}
 	}
-
 	return BMP(fheader, new_data);
 }
 
